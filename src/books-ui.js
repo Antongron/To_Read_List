@@ -10,17 +10,78 @@ export class BooksUI {
       this.searchResultHolder = document.getElementById("searchResultHolder");
       this.bookInfoHolder = document.getElementById("bookInfoHolder");
   
-      const searchInput = document.getElementById("searchInput");
-      const goButton = document.getElementById("goButton");
+      const searchInput = document.getElementById("searchInput"),
+            goButton = document.getElementById("goButton"),
+            previousPage = document.getElementById("previousPage"),
+            nextPage = document.getElementById("nextPage"),
+            foundItem = document.getElementById("foundItem"),
+            startItem = document.getElementById("startItem"),
+            pageSize = document.getElementById("pageSize"),
+            toReadList = document.getElementById("toReadList"),
+            addBook = document.createElement("button");
+      addBook.innerHTML = `Add book to Read List`;
+      addBook.classList = "addBtn";
+
+      let numPage = 1;
+      let temporarySearchHolder;
+      let temporaryBookHolder;
+      let toReadHolder = [];
+      
+      
+  
+      let numItems;
+      previousPage.addEventListener("click", () => {
+        
+        if ((numPage-1) < 1  ) {
+          alert("It's the first page")
+          return
+        }
+        numPage--;
+        const querry = searchInput.value;
+        if (!querry) {
+          return;
+        }
+        api.search(querry, numPage).then(page => {
+          this.processSearchResult(page);
+          startItem.innerText = `Start: ${page.start}`;
+          pageSize.innerText =`Page size: ${page.docs.length}`;
+        });
+      });
+
+      nextPage.addEventListener("click", () => {
+        
+        if ((numPage + 1) > (numItems/100 +1 ) ) {
+          alert("It's the last page")
+          return
+        }
+        numPage++;
+        const querry = searchInput.value;
+        if (!querry) {
+          return;
+        }
+        api.search(querry, numPage).then(page => {
+          this.processSearchResult(page);
+          startItem.innerText = `Start: ${page.start}`;
+          pageSize.innerText =`Page size: ${page.docs.length}`;
+        });
+      })
   
       goButton.addEventListener("click", () => {
         const querry = searchInput.value;
         if (!querry) {
           return;
         }
+
+        numPage = 1;
+        
   
-        api.search(querry).then(page => {
+        api.search(querry, numPage).then(page => {
           this.processSearchResult(page);
+          numItems = page.numFound;
+          foundItem.innerText = `Found: ${numItems}`;
+          startItem.innerText = `Start: ${page.start}`;
+          pageSize.innerText =`Page size: ${page.docs.length}`;
+          temporarySearchHolder = page;
         });
       });
   
@@ -42,9 +103,11 @@ export class BooksUI {
         }
   
         this.selectedBook = selectedBook;
+        temporaryBookHolder = selectedBook;
+        console.log(temporaryBookHolder);
         targetDiv.classList.add("select-book");
         let languages;
-        if (selectedBook.language != undefined) {
+        if (selectedBook.language !== undefined) {
           languages = selectedBook.language.join(", ");
         } else {
           languages = "information not found";
@@ -81,8 +144,80 @@ export class BooksUI {
           <div>Years published: ${yearsPublich}</div>
         </div>
         `;
+        bookInfoHolder.appendChild(addBook);
       });
-    }
+
+      let toReadHTML = document.createElement("div");
+      const renderToReadHTML = () => {
+        toReadHolder.forEach( item => {
+        let languages;
+        if (item.language === undefined ) {
+          languages = "information of language not found"
+        } else { languages = item.language };
+        let sub;
+        if (item.subtitle === undefined ) {
+          sub = ""
+        } else { sub = item.subtitle }
+        let author;
+        if(item.author_name === undefined ) {
+          author = "information of author not found"
+        } else { author = item.author_name };
+      
+        
+        toReadHTML.innerHTML += `
+        <div id="${item.id}">
+          <h1>${item.title} (${languages})</h1>
+          <p>${sub}</p>
+          <p>${author}</p>
+          <button id="mark">Mark as read</button>
+          <button id="${item.id} remove">Remove</button>
+        </div>
+        `;
+      })};
+      let keys;
+      
+      if (localStorage.length > 0) {
+        for( let i = 0; i < localStorage.length; i++) {
+          keys = localStorage.key(i);
+          toReadHolder.push(JSON.parse(localStorage.getItem(keys)));
+      };
+      toReadHolder[0] = toReadHolder[0][0];
+      renderToReadHTML();
+      toReadList.appendChild(toReadHTML);
+      };
+      
+      addBook.addEventListener("click", () => {
+        let check = temporaryBookHolder.id;
+        if (localStorage.length == 0) {
+          toReadHolder.push(temporaryBookHolder);
+          localStorage.setItem(check, JSON.stringify(temporaryBookHolder));
+        };
+         if(JSON.parse(localStorage.getItem(check)) === null ) {
+          toReadHolder.push(temporaryBookHolder);
+          localStorage.setItem(check, JSON.stringify(temporaryBookHolder));
+        };
+    
+        toReadHTML.innerHTML = "";
+        renderToReadHTML();
+
+        toReadList.appendChild(toReadHTML);
+        const markBtn = document.querySelector("#mark"),
+              removeBtn = document.querySelector("#remove");
+        
+        Array.from(document.querySelectorAll("#mark"), function(el){
+          el.onclick = function() {
+            if(this.parentElement.className !== "mark") {
+              this.parentElement.classList.add("mark");
+              this.innerHTML = `Mark as unread`;
+            } else {
+              this.parentElement.classList.remove("mark");
+              this.innerHTML = `Mark as read`;
+            }
+            ;
+          }
+        })
+      }) 
+    };
   
     processSearchResult(page) {
       page.docs.forEach(item => {
@@ -90,6 +225,7 @@ export class BooksUI {
       });
   
       this.currentPage = page.docs;
+
   
       const booksHTML = page.docs.reduce((acc, item) => {
         return (
@@ -102,5 +238,5 @@ export class BooksUI {
   
       this.searchResultHolder.innerHTML = booksHTML;
     }
-  }
+  };
   
