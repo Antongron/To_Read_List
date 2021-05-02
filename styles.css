@@ -4,6 +4,10 @@
   font-family: 'Antonio', sans-serif;
 }
 
+ul, li {
+  list-style: none;
+}
+
 .app-holder {
 	display: flex;
 	gap: 32px;
@@ -41,7 +45,15 @@
   position: bottom;
 }
 
+.navItem {
+  font-size: 18px;
+  margin-left: 10px;
+  display: inline-block;
+  width: 150px;
+}
+
 .book-info {
+  border-radius: 5px;
   background-color: white;
   margin: 10px 25px;
   padding: 10%;
@@ -80,6 +92,11 @@
   font-weight: normal;
   font-size: 18px;
 }
+
+.addBtn {
+  border: none;
+  height: 5.03vh;
+}
   
 .right-block {
 	flex: 0 1 25vw;
@@ -87,3 +104,27 @@
   height: 100vh;
 }
 
+.toReadListHolder {
+  overflow-y: auto;
+	cursor: pointer;
+  height: 97vh;
+}
+
+div.toReadListHolder>div>div {
+  border-radius: 5px;
+  background-color: white;
+  margin: 10px 25px;
+  padding: 10%;
+  width: auto;
+}
+
+
+
+.mark {
+  color: #11702c;
+  /* border-radius: 5px;
+  background-color: white;
+  margin: 10px 25px;
+  padding: 10%;
+  width: auto; */
+}
